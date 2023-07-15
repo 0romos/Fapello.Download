@@ -62,7 +62,8 @@ _Below is an example of how you can instruct your audience on installing and set
 
 1. Run Fapello.Download
     ```sh
-    cd Fapello.Download && python3 main.py
+    cd Fapello.Download
+    python3 main.py -m <model name> -q <total posts on the profile>
     ```
 See the [open issues](https://github.com/0romos/Fapello.Download/) for a full list of proposed features (and known issues).
 
