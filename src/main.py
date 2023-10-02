@@ -4,10 +4,11 @@ import requests
 import argparse
 
 class Downloader:
-    def __init__(self, model_name, quantity):
+    def __init__(self, model_name, quantity, headers):
         self.model_name = model_name
         self.quantity = quantity
         self.folder_name = model_name
+        self.headers = headers
         os.makedirs(self.folder_name, exist_ok=True)
 
     @staticmethod
@@ -25,8 +26,8 @@ class Downloader:
         }.get(no, '/1000/')
 
     @staticmethod
-    def video_exists(path):
-        r = requests.head(path)
+    def video_exists(path, headers):
+        r = requests.head(path, headers=headers)
         return r.status_code == requests.codes.ok
 
     def download_media(self):
@@ -42,17 +43,17 @@ class Downloader:
             complete_url = model_url + self.model_name + '_' + str(i).zfill(4) + '.jpg'
             complete_video_url = model_url + self.model_name + '_' + str(i).zfill(4) + '.mp4'
 
-            downloaded_file = requests.get(complete_url)
+            downloaded_file = requests.get(complete_url, headers=self.headers)
             file_name = complete_url[complete_url.rindex('/') + 1:]
             file_path = os.path.join(self.folder_name, file_name)
             print("[ DOWNLOADED ] ~> ", model_num+file_path)
             open(file_path, 'wb').write(downloaded_file.content)
 
-            video_available = self.video_exists(complete_video_url)
+            video_available = self.video_exists(complete_video_url, headers=self.headers)
 
             if video_available:
                 print("[ DOWNLOADED ] ~> ", model_num+file_path)
-                downloaded_video_file = requests.get(complete_video_url)
+                downloaded_video_file = requests.get(complete_video_url, headers=self.headers)
                 video_file_name = complete_video_url[complete_video_url.rindex('/') + 1:]
                 video_file_path = os.path.join(self.folder_name, video_file_name)
                 open(video_file_path, 'wb').write(downloaded_video_file.content)
@@ -63,6 +64,8 @@ if __name__ == '__main__':
     parser.add_argument("-q", "--quantity", help="Quantity of media to be downloaded.", required=False)
     args = parser.parse_args()
 
-    downloader = Downloader(args.m, args.q)
+    headers = {"User-Agent":"Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/118.0"}
+    
+    downloader = Downloader(args.m, args.q, headers)
     downloader.download_media()
 
