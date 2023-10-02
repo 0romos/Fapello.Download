@@ -6,7 +6,7 @@ import argparse
 class Downloader:
     def __init__(self, model_name, quantity):
         self.model_name = model_name
-        self.quantity = int(quantity)
+        self.quantity = quantity
         self.folder_name = model_name
         os.makedirs(self.folder_name, exist_ok=True)
 
@@ -30,6 +30,12 @@ class Downloader:
         return r.status_code == requests.codes.ok
 
     def download_media(self):
+        if not self.quantity:
+            r = requests.get(f"https://fapello.com/{self.model_name}/", headers=self.headers)
+            soup = BeautifulSoup(r.text, features="lxml")
+            q = soup.select_one("div#content a").get("href").split("/")[-2] # select the first image from the model's site, giving the highest image number.
+            self.quantity = int(q)
+        
         for i in range(self.quantity, 0, -1):
             model_num = self.check_num(i)
             model_url = 'https://fapello.com/content/' + self.model_name[0] + '/' + self.model_name[1] + '/' + self.model_name + model_num
@@ -53,8 +59,8 @@ class Downloader:
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("-m", help="Model name to be downloaded")
-    parser.add_argument("-q", help="Quantity of media to be downloaded")
+    parser.add_argument("-m", "--model", help="Model name to be downloaded.", required=True)
+    parser.add_argument("-q", "--quantity", help="Quantity of media to be downloaded.", required=False)
     args = parser.parse_args()
 
     downloader = Downloader(args.m, args.q)
