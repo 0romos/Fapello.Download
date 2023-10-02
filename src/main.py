@@ -4,11 +4,12 @@ import requests
 import argparse
 
 class Downloader:
-    def __init__(self, model_name, quantity, headers):
+    def __init__(self, model_name, quantity, headers, only_update):
         self.model_name = model_name
         self.quantity = quantity
         self.folder_name = model_name
         self.headers = headers
+        self.only_update = only_update
         os.makedirs(self.folder_name, exist_ok=True)
 
     @staticmethod
@@ -32,7 +33,7 @@ class Downloader:
 
     def download_media(self):
         if not self.quantity:
-            r = requests.get(f"https://fapello.com/{self.model_name}/", headers=self.headers)
+            r = requests.get("https://fapello.com/" + self.model_name + "/", headers=self.headers)
             soup = BeautifulSoup(r.text, features="lxml")
             q = soup.select_one("div#content a").get("href").split("/")[-2] # select the first image from the model's site, giving the highest image number.
             self.quantity = int(q)
@@ -46,6 +47,11 @@ class Downloader:
             downloaded_file = requests.get(complete_url, headers=self.headers)
             file_name = complete_url[complete_url.rindex('/') + 1:]
             file_path = os.path.join(self.folder_name, file_name)
+            
+            if self.only_update and os.path.exists(file_path):
+                print("[ EXISTS ] ~> ", model_num+file_path)
+                break
+            
             print("[ DOWNLOADED ] ~> ", model_num+file_path)
             open(file_path, 'wb').write(downloaded_file.content)
 
@@ -62,10 +68,11 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("-m", "--model", help="Model name to be downloaded.", required=True)
     parser.add_argument("-q", "--quantity", help="Quantity of media to be downloaded.", required=False)
+    parser.add_argument("-u", "--update", help="Only download until there's a file in the countdown that already exists.", action="store_true", required=False)
     args = parser.parse_args()
 
     headers = {"User-Agent":"Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/118.0"}
     
-    downloader = Downloader(args.m, args.q, headers)
+    downloader = Downloader(args.m, args.q, headers, args.u)
     downloader.download_media()
 
